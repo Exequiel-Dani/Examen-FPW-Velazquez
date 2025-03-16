@@ -23,6 +23,7 @@ function preload() {
     //carga las imagenes
     this.load.image('oceano', 'https://labs.phaser.io/assets/skies/deepblue.png');
     this.load.image('buque', 'https://labs.phaser.io/assets/sprites/ufo.png');
+    this.load.image('torpedo', 'https://labs.phaser.io/assets/sprites/bullet.png');
 }
 
 function create() {
@@ -32,6 +33,10 @@ function create() {
     // Agrega buque
     buque = this.physics.add.sprite(400, 500, 'buque');
     buque.setCollideWorldBounds(true);// para que no salga de la pantalla
+
+    // grupo para torpedos
+    torpedos = this.physics.add.group();
+
     // Capturar las teclas
     cursors = this.input.keyboard.createCursorKeys();
 
@@ -59,4 +64,22 @@ function update() {
         buque.setVelocityX(200);
     }
 
+    //detecta al tocar espaico
+    if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
+        dispararTorpedo();
+    }    
+}
+
+function dispararTorpedo() {
+    let torpedo = torpedos.create(buque.x, buque.y, 'torpedo');
+    torpedo.setVelocityY(-300); // dispara para arriba
+    torpedo.setCollideWorldBounds(true);
+    torpedo.body.onWorldBounds = true;
+
+    // Elimina torpedo al salir pantalla
+    torpedo.body.world.on('worldbounds', (body) => {
+        if (body.gameObject === torpedo) {
+            torpedo.destroy();
+        }
+    });
 }
