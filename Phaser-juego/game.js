@@ -22,11 +22,11 @@ let cursors; // teclas flecha
 function preload() {
     //carga las imagenes
     this.load.image('oceano', 'https://labs.phaser.io/assets/skies/deepblue.png');
-    this.load.image('buque', 'https://labs.phaser.io/assets/sprites/ufo.png');
+    this.load.image('buque', 'public/assets/buque.png');
     this.load.image('torpedo', 'https://labs.phaser.io/assets/sprites/bullet.png');
     //enemigos
-    this.load.image('enemigoBuque', 'https://upload.wikimedia.org/wikipedia/commons/4/44/US_Navy_Destroyer.png');
-    this.load.image('enemigoSubmarino', 'https://upload.wikimedia.org/wikipedia/commons/6/6b/USS_Nautilus_SS-168.jpg');
+    this.load.image('enemigoBuque', 'public/assets/buque-enemigo.png');  
+    this.load.image('enemigoSubmarino', 'public/assets/submarino.png');
     this.load.image('torpedoEnemigo', 'https://labs.phaser.io/assets/sprites/bullet.png');
 
 }
@@ -61,6 +61,7 @@ function create() {
 function update() {
     // Reinicia velocidad
     buque.setVelocity(0);
+    buque.displayHeight = 55;
 
     // Movimientos
     if (cursors.up.isDown) {
@@ -84,6 +85,21 @@ function update() {
     if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
         dispararTorpedo();
     }
+
+    //desaparecer enemigo
+    let enemigosAEliminar = []; // Array de enemigos
+
+    enemigos.children.iterate((enemigo) => {
+        if (enemigo.y > 550) { //altura en y al que se destruye
+        enemigosAEliminar.push(enemigo); //agregamos a lista de eliminación
+        }
+    });
+
+    enemigosAEliminar.forEach((enemigo) => {
+        enemigo.destroy();
+    });
+
+    
 }
 
 function dispararTorpedo() {
@@ -102,11 +118,39 @@ function dispararTorpedo() {
 
 function crearEnemigo() {
     let tipo = Phaser.Math.Between(0, 1); // 0 buque, 1 submarino
+    let submarinosActivos = enemigos.getChildren().filter(e => e.texture.key === 'enemigoSubmarino').length;
+
+    //si hay 4 submarinos no se crean mas
+    if (tipo === 1 && submarinosActivos >= 4) {
+        return;
+    }
+
     let x = Phaser.Math.Between(50, 750); // posicion aleatoria X
     let enemigo = enemigos.create(x, 50, tipo === 0 ? 'enemigoBuque' : 'enemigoSubmarino');
     
-    enemigo.setVelocityY(100); // movimiento enemigo abajo
+
+    // Ajustar tamaño
+    if (tipo === 1) {//1 es submarino
+        /*enemigo.setScale(0.5);*/
+        enemigo.displayWidth = 40; // Ancho
+        enemigo.displayHeight = 80; // Alto
+    } if (tipo === 0) {// es buque
+        /*enemigo.setScale(0.5);*/
+        enemigo.displayWidth = 25; // Ancho
+        enemigo.displayHeight = 50; // Alto
+    }
+
+    this.physics.world.enable(enemigo);//fisicas
+    enemigo.setActive(true);
+    enemigo.setVisible(true);
     enemigo.setCollideWorldBounds(true);
+
+    if (tipo === 0) {
+        enemigo.setVelocityY(Phaser.Math.Between(50, 100)); // Buques
+    } if (tipo === 1) {
+        enemigo.setVelocityY(Phaser.Math.Between(30, 50)); // Submarinos
+    }
+
 
     // disparo enemigo
     this.time.addEvent({
